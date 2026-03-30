@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ee · 虚拟小手机</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: radial-gradient(circle at 20% 30%, #1e2a3a, #0f1722);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            padding: 20px;
+        }
+
+        /* 小手机主体 */
+        .phone {
+            width: 350px;
+            height: 700px;
+            background-color: #f5f7fb;
+            border-radius: 44px;
+            box-shadow: 0 30px 40px rgba(0, 0, 0, 0.4), 0 0 0 6px #3a3a44, 0 0 0 12px #1e1e24;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            background: #f5f7fb;
+            padding: 12px 20px 6px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 590;
+            color: #1c1c1e;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* 消息列表专用头部 */
+        .messages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: #f5f7fb;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+        }
+        .add-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #007aff;
+        }
+        .ee-avatar {
+            width: 36px;
+            height: 36px;
+            background: #ffb347;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        /* 主视图容器 */
+        .view {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            background: #f5f7fb;
+            scroll-behavior: smooth;
+        }
+        .view.active {
+            display: flex;
+        }
+
+        /* ========= 消息列表样式 ========= */
+        .chat-list {
+            padding: 8px 0;
+        }
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            gap: 14px;
+            border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+        .avatar {
+            width: 52px;
+            height: 52px;
+            background: #e9ecf2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        .chat-info {
+            flex: 1;
+        }
+        .chat-name {
+            font-weight: 620;
+            font-size: 16px;
+        }
+        .chat-preview {
+            font-size: 13px;
+            color: #6c6f78;
+        }
+
+        /* ========= 好友页面 (图一风格) ========= */
+        .friends-container {
+            padding: 16px;
+        }
+        .profile-summary {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: white;
+            padding: 16px;
+            border-radius: 24px;
+            margin-bottom: 20px;
+        }
+        .profile-avatar {
+            width: 56px;
+            height: 56px;
+            background: #ffb347;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+        }
+        .profile-info h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 12px 0 8px 0;
+        }
+        .section-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .manage-link {
+            font-size: 13px;
+            color: #007aff;
+        }
+        .group-card {
+            background: white;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+        }
+        .group-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        .add-group {
+            color: #007aff;
+            font-size: 14px;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        /* ========= 动态页面 (图二风格) ========= */
+        .moments-header {
+            background: white;
+            padding: 16px;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            margin-bottom: 12px;
+        }
+        .moment-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .moment-stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 0.5px solid #eee;
+            border-bottom: 0.5px solid #eee;
+            margin-bottom: 16px;
+        }
+        .moment-entry {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .share-input {
+            background: #f0f2f5;
+            border-radius: 30px;
+            padding: 10px 16px;
+            color: #8e8e93;
+            margin-bottom: 20px;
+        }
+        .feed-item {
+            background: white;
+            border-radius: 20px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        /* 侧边栏 (抽屉) */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px 0 0 20px;
+        }
+        .drawer.open {
+            right: 0;
+        }
+        .drawer-header {
+            padding: 24px 20px;
+            font-size: 24px;
+            font-weight: bold;
+            border-bottom: 0.5px solid #ddd;
+        }
+        .drawer-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+        .drawer-item {
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 16px;
+            border-bottom: 0.5px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .drawer-item i {
+            width: 24px;
+            color: #007aff;
+        }
+        .settings-config-row {
+            display: flex;
+            gap: 16px;
+            padding: 16px 20px;
+            margin-top: 8px;
+        }
+        .setting-card, .config-card {
+            flex: 1;
+            background: #eef2f7;
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+            display: none;
+        }
+        .overlay.active {
+            display: block;
+        }
+
+        /* 弹出菜单 (+) */
+        .popup-menu {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            width: 200px;
+            z-index: 1001;
+            display: none;
+        }
+        .popup-menu.active {
+            display: block;
+        }
+        .popup-item {
+            padding: 14px 20px;
+            border-bottom: 0.5px solid #eee;
+            cursor: pointer;
+        }
+
+        /* 设置/配置页面样式 */
+        .setting-page, .config-page {
+            padding: 20px;
+        }
+        .setting-item {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .config-item {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .btn-save {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 30px;
+            width: 100%;
+            font-weight: 600;
+        }
+        .back-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        /* 底部tab */
+        .tab-bar {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 16px 12px;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #8e8e93;
+            cursor: pointer;
+            flex: 1;
+        }
+        .tab-item i {
+            font-size: 22px;
+        }
+        .tab-item.active {
+            color: #007aff;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="phone">
+    <!-- 动态状态栏显示实时时间 -->
+    <div class="status-bar">
+        <span class="time" id="liveTime">--:--</span>
+        <span><i class="fas fa-signal"></i> <i class="fas fa-battery-full"></i></span>
+    </div>
+
+    <!-- 消息列表视图 -->
+    <div id="messagesView" class="view active">
+        <div class="messages-header">
+            <button class="add-btn" id="addBtn"><i class="fas fa-plus"></i></button>
+            <div class="ee-avatar" id="eeAvatar">ee</div>
+        </div>
+        <div class="chat-list" id="chatList">
+            <div class="chat-item">
+                <div class="avatar">🐱</div>
+                <div class="chat-info"><div class="chat-name">沈星回</div><div class="chat-preview">哥哥最近总是很忙</div></div>
+            </div>
+            <div class="chat-item">
+                <div class="avatar">🌟</div>
+                <div class="chat-info"><div class="chat-name">小助手</div><div class="chat-preview">晚上好呀~</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 好友视图 -->
+    <div id="friendsView" class="view">
+        <div class="friends-container">
+            <div class="profile-summary">
+                <div class="profile-avatar">ee</div>
+                <div class="profile-info"><h3>ee</h3><p>这个人很懒</p></div>
+            </div>
+            <div class="section-header"><span class="section-title">我的好友 (2/2)</span><span class="manage-link">管理</span></div>
+            <div class="group-card"><div class="group-row"><span>默认分组</span><span>2</span></div></div>
+            <div class="add-group">+ 新增分组</div>
+            <div class="section-header" style="margin-top: 16px;"><span class="section-title">群聊管理 (0/0)</span><span class="manage-link">管理</span></div>
+        </div>
+    </div>
+
+    <!-- 动态视图 -->
+    <div id="momentsView" class="view">
+        <div class="moments-header">
+            <div class="moment-profile"><div class="profile-avatar" style="width:48px;height:48px;">ee</div><div><h3>ee</h3><div>访客总量 1314</div></div></div>
+            <div class="moment-stats"><span>说说</span><span>日志</span><span>相册</span><span>留言</span><span>更多</span></div>
+            <div class="share-input"><i class="far fa-edit"></i> 分享新鲜事...</div>
+        </div>
+        <div class="feed-item"><strong>Cute Doll</strong><p>今天天气真好呀~</p></div>
+        <div class="feed-item"><strong>antibue</strong><p>打卡虚拟世界！</p></div>
+    </div>
+    <!-- 频道视图 -->
+    <div id="channelsView" class="view">
+        <div style="padding:20px; text-align:center; color:gray;">频道列表<br>🎮 游戏 · 🎵 音乐 · 📚 阅读</div>
+    </div>
+
+    <!-- 底部Tab -->
+    <div class="tab-bar">
+        <div class="tab-item active" data-tab="messages"><i class="fas fa-comment-dots"></i><span>消息</span></div>
+        <div class="tab-item" data-tab="friends"><i class="fas fa-user-friends"></i><span>好友</span></div>
+        <div class="tab-item" data-tab="moments"><i class="fas fa-globe"></i><span>动态</span></div>
+        <div class="tab-item" data-tab="channels"><i class="fas fa-hashtag"></i><span>频道</span></div>
+    </div>
+
+    <!-- 侧边栏抽屉 -->
+    <div class="overlay" id="drawerOverlay"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header">ee 的菜单</div>
+        <div class="drawer-menu">
+            <div class="drawer-item" data-action="persona"><i class="fas fa-user-astronaut"></i> 我的人设</div>
+            <div class="drawer-item" data-action="worldbook"><i class="fas fa-book"></i> 世界书</div>
+            <div class="drawer-item" data-action="emoji"><i class="fas fa-smile"></i> 表情包</div>
+            <div class="drawer-item" data-action="text"><i class="fas fa-font"></i> 文字</div>
+            <div class="drawer-item" data-action="theme"><i class="fas fa-palette"></i> 主题美化</div>
+            <div class="drawer-item" data-action="prompt"><i class="fas fa-magic"></i> 提示词</div>
+            <div class="drawer-item" data-action="preset"><i class="fas fa-sliders-h"></i> 预设</div>
+            <div class="drawer-item" data-action="shopping"><i class="fas fa-shopping-bag"></i> 购物</div>
+            <div class="drawer-item" data-action="library"><i class="fas fa-book-open"></i> 图书馆</div>
+            <div class="settings-config-row">
+                <div class="setting-card" id="openSetting">⚙️ 设置</div>
+                <div class="config-card" id="openConfig">📁 配置</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加号弹出菜单 -->
+    <div class="popup-menu" id="plusMenu">
+        <div class="popup-item" data-action="addFriend">➕ 添加好友</div>
+        <div class="popup-item" data-action="createGroup">👥 创建群聊</div>
+        <div class="popup-item" data-action="importCard">🎴 导入角色卡</div>
+    </div>
+
+    <!-- 内嵌设置页面 (动态创建) -->
+    <div id="settingPage" class="view setting-page">
+        <div class="back-nav" id="backFromSetting"><i class="fas fa-arrow-left"></i> 返回</div>
+        <div class="setting-item"><strong>API预设管理</strong><br><select style="width:100%; margin-top:8px;"><option>默认预设</option></select></div>
+        <div class="setting-item"><strong>主API设置</strong><br><input type="text" placeholder="API地址" style="width:100%; margin-top:8px;"></div>
+        <div class="setting-item"><strong>主API参数设置</strong><br><input type="text" placeholder="参数" style="width:100%;"></div>
+        <div class="setting-item"><strong>时间感知</strong><br><span id="timeSense">--:--:--</span></div>
+        <div class="setting-item"><strong>MiniMax语音合成（TTS）</strong><br><label><input type="checkbox"> 启用</label></div>
+        <button class="btn-save" id="saveSettings">保存设置</button>
+    </div>
+
+    <div id="configPage" class="view config-page">
+        <div class="back-nav" id="backFromConfig"><i class="fas fa-arrow-left"></i> 返回</div>
+        <div class="config-item"><strong>通知设置</strong><br>系统通知权限 <button id="reqPerm" style="margin-left:10px;">请求授权</button><div style="font-size:12px; color:gray;">已拒绝 (Chrome需手动开启)</div></div>
+        <div class="config-item"><strong>后台保活服务</strong><br>未激活</div>
+        <div class="config-item"><strong>数据管理</strong><br><button id="exportData">导出数据</button> <button id="importData">导入数据</button><div>备份包含：API预设、聊天记录、用户配置等所有数据</div></div>
+    </div>
+</div>
+
+<script>
+    // 实时时间更新 + 时间感知
+    function updateTime() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const fullTime = now.toLocaleTimeString();
+        document.getElementById('liveTime') && (document.getElementById('liveTime').innerText = timeStr);
+        const timeSenseSpan = document.getElementById('timeSense');
+        if(timeSenseSpan) timeSenseSpan.innerText = fullTime;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 视图切换
+    const views = {
+        messages: document.getElementById('messagesView'),
+        friends: document.getElementById('friendsView'),
+        moments: document.getElementById('momentsView'),
+        channels: document.getElementById('channelsView'),
+        setting: document.getElementById('settingPage'),
+        config: document.getElementById('configPage')
+    };
+    function showView(viewName) {
+        for(let k in views) if(views[k]) views[k].classList.remove('active');
+        if(views[viewName]) views[viewName].classList.add('active');
+        // 底部tab高亮 (仅主tab)
+        const tabs = document.querySelectorAll('.tab-item');
+        tabs.forEach(tab => {
+            const t = tab.getAttribute('data-tab');
+            if(t === viewName) tab.classList.add('active');
+            else tab.classList.remove('active');
+        });
+    }
+
+    // 底部tab事件
+    document.querySelectorAll('.tab-item').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const tabName = tab.getAttribute('data-tab');
+            if(tabName && views[tabName]) showView(tabName);
+            closeDrawer();
+        });
+    });
+
+    // 抽屉控制
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('drawerOverlay');
+    function openDrawer() { drawer.classList.add('open'); overlay.classList.add('active'); }
+    function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('active'); }
+    overlay.addEventListener('click', closeDrawer);
+    document.getElementById('eeAvatar').addEventListener('click', openDrawer);
+
+    // 加号菜单
+    const plusBtn = document.getElementById('addBtn');
+    const plusMenu = document.getElementById('plusMenu');
+    plusBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        plusMenu.classList.toggle('active');
+    });
+    document.addEventListener('click', () => plusMenu.classList.remove('active'));
+    document.querySelectorAll('.popup-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            const action = item.getAttribute('data-action');
+            alert(`功能开发中: ${action}`);
+            plusMenu.classList.remove('active');
+        });
+    });
+
+    // 抽屉内选项
+    document.querySelectorAll('.drawer-item[data-action]').forEach(el => {
+        el.addEventListener('click', () => { alert(`即将打开: ${el.innerText}`); closeDrawer(); });
+    });
+    // 设置 & 配置按钮
+    document.getElementById('openSetting').addEventListener('click', () => {
+        showView('setting');
+        closeDrawer();
+        updateTime(); // 刷新时间感知
+    });
+    document.getElementById('openConfig').addEventListener('click', () => {
+        showView('config');
+        closeDrawer();
+   updateTime(); // 刷新时间感知
+    });
+    document.getElementById('openConfig').addEventListener('click', () => {
+        showView('config');
+        closeDrawer();
+    });
+    document.getElementById('backFromSetting').addEventListener('click', () => showView('messages'));
+    document.getElementById('backFromConfig').addEventListener('click', () => showView('messages'));
+    document.getElementById('saveSettings').addEventListener('click', () => alert('设置已保存（演示）'));
+    document.getElementById('reqPerm').addEventListener('click', () => alert('请求通知权限（演示）'));
+    document.getElementById('exportData').addEventListener('click', () => alert('导出数据功能（演示）'));
+    document.getElementById('importData').addEventListener('click', () => alert('导入数据功能（演示）'));
+
+    // 消息列表聊天模拟（轻交互）
+    document.querySelectorAll('.chat-item').forEach(chat => {
+        chat.addEventListener('click', () => alert('聊天窗口演示版\n可在此扩展对话功能'));
+    });
+
+    // 好友页面管理/新增分组模拟
+    document.querySelector('.manage-link')?.addEventListener('click', () => alert('好友管理'));
+    document.querySelector('.add-group')?.addEventListener('click', () => alert('新增分组'));
+    // 动态页更多交互
+    document.querySelector('.share-input')?.addEventListener('click', () => alert('分享新鲜事'));
+    document.querySelectorAll('.moment-stats span').forEach(span => {
+        span.addEventListener('click', () => alert(`打开${span.innerText}`));
+    });
+    // 侧边栏娱乐项目提醒
+    // 已处理
+</script>
+</body>
+</html>
