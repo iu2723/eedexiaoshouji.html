@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ee的小手机</title>
+    <style>
+        /* 全局配置 - 这里一键改参数，不用翻后面的代码 */
+        :root {
+            /* 手机尺寸配置 */
+            --phone-width: 320px;
+            --phone-aspect-ratio: 9/16;
+            --phone-border-radius: 36px;
+            --phone-frame-width: 12px;
+            
+            /* 全局主题配色 - 一键换色 */
+            --phone-frame-color: #2d3748;
+            --phone-frame-gradient: linear-gradient(145deg, #4a5568, #1a202c);
+            --phone-screen-bg: #f7fafc;
+            --primary-color: #6366f1;
+            --primary-light: #818cf8;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --text-color: #1a202c;
+            --text-secondary: #718096;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --mask-bg: rgba(0,0,0,0.5);
+            
+            /* 动画配置 */
+            --transition-normal: all 0.3s ease;
+            --transition-fast: all 0.2s ease;
+        }
+
+        /* 全局重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* 页面居中容器 */
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        /* 通用按钮样式 */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #4f46e5;
+            transform: scale(0.98);
+        }
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        .btn-success:hover {
+            background: #059669;
+            transform: scale(0.98);
+        }
+        .btn-default {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        .btn-default:hover {
+            background: #f7fafc;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* 手机外壳核心样式 */
+        .phone {
+            position: relative;
+            width: var(--phone-width);
+            aspect-ratio: var(--phone-aspect-ratio);
+            border-radius: var(--phone-border-radius);
+            background: var(--phone-frame-gradient);
+            padding: var(--phone-frame-width);
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.3),
+                inset 0 0 0 2px rgba(255,255,255,0.1),
+                inset 0 0 12px rgba(0,0,0,0.5);
+            transition: var(--transition-normal);
+        }
+        .phone:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 30px 80px rgba(0,0,0,0.4),
+                inset 0 0 0 2px rgba(255,255,255,0.1),
+                inset 0 0 12px rgba(0,0,0,0.5);
+        }
+
+        /* 顶部听筒+摄像头 */
+        .phone-top {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 28px;
+            background: var(--phone-frame-color);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            z-index: 999;
+        }
+        .phone-speaker {
+            width: 60px;
+            height: 6px;
+            background: #1a202c;
+            border-radius: 10px;
+        }
+        .phone-camera {
+            width: 12px;
+            height: 12px;
+            background: #1a202c;
+            border-radius: 50%;
+            box-shadow: inset 0 0 3px rgba(255,255,255,0.2);
+        }
+
+        /* 侧边按键 */
+        .phone-side-btn {
+            position: absolute;
+            width: 3px;
+            background: var(--phone-frame-gradient);
+            border-radius: 2px;
+            transition: var(--transition-normal);
+        }
+        .power-btn {
+            right: -3px;
+            top: 120px;
+            height: 50px;
+        }
+        .volume-up {
+            left: -3px;
+            top: 100px;
+            height: 35px;
+        }
+        .volume-down {
+            left: -3px;
+            top: 150px;
+            height: 35px;
+        }
+        .phone-side-btn:hover {
+            width: 5px;
+        }
+        .volume-up:hover, .volume-down:hover {
+            left: -5px;
+        }
+        .power-btn:hover {
+            right: -5px;
+        }
+
+        /* 手机屏幕核心区域 */
+        .phone-screen {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: calc(var(--phone-border-radius) - var(--phone-frame-width));
+            background: var(--phone-screen-bg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 状态栏 - 带实时时间感知 */
+        .status-bar {
+            width: 100%;
+            height: 30px;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-color);
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 99;
+            flex-shrink: 0;
+        }
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 页面容器 - 所有页面统一管理 */
+        .page-container {
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+        }
+        .page.active {
+            display: flex;
+        }
+
+        /* ========== 1. 消息页面 ========== */
+        /* 消息页顶部导航 - 已按需求反转：左头像 右+号 */
+        .msg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        .header-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--phone-screen-bg);
+            cursor: pointer;
+            transition: var(--transition-fast);
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .header-btn:hover {
+            background: var(--border-color);
+        }
+        .avatar-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid var(--primary-light);
+            flex-shrink: 0;
+        }
+        .avatar-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 右上角+号弹出菜单 */
+        .add-menu {
+            position: absolute;
+            top: 60px;
+            right: 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+            z-index: 100;
+            transform: translateY(-10px);
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-fast);
+        }
+        .add-menu.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+        .add-menu-item {
+            padding: 12px 20px;
+            font-size: 14px;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition-fast);
+            white-space: nowrap;
+        }
+        .add-menu-item:hover {
+            background: var(--phone-screen-bg);
+        }
+
+        /* 消息列表 */
+        .msg-list {
+            flex: 1;
+            padding: 8px 0;
+        }
+        .msg-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .msg-item:hover {
+            background: rgba(0,0,0,0.02);
+        }
+        .msg-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .msg-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .msg-info {
+            flex: 1;
+            overflow: hidden;
+        }
+        .msg-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+        .msg-preview {
+            font-size: 13px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .msg-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        /* ========== 2. 好友页面 ========== */
+        .friend-header {
+            padding: 20px 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .friend-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .friend-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
+        .friend-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .friend-user-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .friend-user-desc {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .friend-section {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        .add-group-btn {
+            width: 100%;
+            padding: 10px;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            margin-top: 8px;
+        }
+        .add-group-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* ========== 3. 动态页面 ========== */
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        .feed-header-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        .feed-header-right {
+            display: flex;
+            gap: 16px;
+        }
+        .feed-header-btn {
+            font-size: 14px;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .feed-user-card {
+            padding: 20px 16px;
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .feed-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid var(--primary-light);
+            overflow: hidden;
+        }
+        .feed-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .feed-user-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        .feed-visitor {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .feed-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            margin-bottom: 8px;
+        }
+        .feed-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+        .feed-nav-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .feed-input-box {
+            padding: 12px 16px;
+            background: var(--card-bg);
+            margin-bottom: 8px;
+        }
+        .feed-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            margin-bottom: 8px;
+        }
+        .feed-input:focus {
+            border-color: var(--primary-color);
+        }
+        .feed-send-btn {
+            margin-left: auto;
+            display: block;
+        }
+
+        .feed-item {
+            padding: 16px;
+            background: var(--card-bg);
+            margin-bottom: 8px;
+        }
+        .feed-item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .feed-item-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .feed-item-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .feed-item-info {
+            flex: 1;
+        }
+        .feed-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .feed-item-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .feed-item-content {
+            font-size: 14px;
+            color: var(--text-color);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        /* ========== 4. 频道页面 ========== */
+        .channel-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-secondary);
+        }
+        .channel-empty-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+
+        /* ========== 侧边栏 ========== */
+        .sidebar-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--mask-bg);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-fast);
+        }
+        .sidebar-mask.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .sidebar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 75%;
+            height: 100%;
+            background: var(--card-bg);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: var(--transition-normal);
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar.show {
+            transform: translateX(0);
+        }
+        .sidebar-header {
+            padding: 30px 16px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+        }
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
+        .sidebar-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .sidebar-user-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        .sidebar-menu-group {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .sidebar-menu-title {
+            padding: 8px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .sidebar-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .sidebar-menu-item:hover {
+            background: var(--phone-screen-bg);
+        }
+        .sidebar-menu-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--primary-color);
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+        .sidebar-footer-btn {
+            flex: 1;
+            padding: 12px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        /* ========== 设置&配置页面 ========== */
+        .setting-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--phone-screen-bg);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+        }
+        .setting-page.show {
+            display: flex;
+        }
+        .setting-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--phone-screen-bg);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .back-btn:hover {
+            background: var(--border-color);
+        }
+        .setting-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .setting-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .setting-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 8px 0;
+            margin-bottom: 16px;
+        }
+        .setting-section-title {
+            padding: 12px 16px 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            gap: 8px;
+        }
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        .setting-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .setting-item-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .setting-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            background: var(--phone-screen-bg);
+        }
+        .setting-input:focus {
+            border-color: var(--primary-color);
+        }
+        .setting-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            background: var(--phone-screen-bg);
+            cursor: pointer;
+        }
+        .setting-select:focus {
+            border-color: var(--primary-color);
+        }
+        .setting-btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .setting-btn-group .btn {
+            flex: 1;
+            font-size: 13px;
+            padding: 6px 10px;
+        }
+        .setting-switch {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            background: var(--border-color);
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            flex-shrink: 0;
+        }
+        .setting-switch.active {
+            background: var(--primary-color);
+        }
+        .setting-switch-dot {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            transition: var(--transition-fast);
+        }
+        .setting-switch.active .setting-switch-dot {
+            left: 22px;
+        }
+        .save-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+        }
+        .test-tip {
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .tip-success {
+            color: var(--success-color);
+        }
+        .tip-error {
+            color: var(--danger-color);
+        }
+
+        /* ========== 底部Tab导航 ========== */
+        .tab-bar {
+            width: 100%;
+            height: 56px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .tab-item.active .tab-icon {
+            color: var(--primary-color);
+        }
+        .tab-item.active .tab-text {
+            color: var(--primary-color);
+        }
+        .tab-icon {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+        .tab-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* 底部手势条 */
+        .home-indicator {
+            width: 40%;
+            height: 5px;
+            background: var(--text-color);
+            border-radius: 10px;
+            margin: 8px auto;
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
+        /* 蒙版 */
+        .mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--mask-bg);
+            z-index: 95;
+            display: none;
+        }
+        .mask.show {
+            display: block;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 400px) {
+            :root {
+                --phone-width: 90vw;
+            }
+        }
+
+        /* 深色模式适配 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --phone-screen-bg: #1a202c;
+                --text-color: #f7fafc;
+                --text-secondary: #a0aec0;
+                --card-bg: #2d3748;
+                --border-color: #4a5568;
+                --mask-bg: rgba(0,0,0,0.7);
+            }
+            .status-bar {
+                background: rgba(26,32,44,0.8);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <!-- 顶部听筒+摄像头 -->
+        <div class="phone-top">
+            <div class="phone-speaker"></div>
+            <div class="phone-camera"></div>
+        </div>
+
+        <!-- 侧边按键 -->
+        <div class="phone-side-btn power-btn"></div>
+        <div class="phone-side-btn volume-up"></div>
+        <div class="phone-side-btn volume-down"></div>
+
+        <!-- 手机屏幕核心区域 -->
+        <div class="phone-screen">
+            <!-- 状态栏 - 实时时间感知 -->
+            <div class="status-bar">
+                <span id="current-time">00:00</span>
+                <div class="status-right">
+                    <span>📶</span>
+                    <span>🔋</span>
+                </div>
+            </div>
+
+            <!-- 页面容器 -->
+            <div class="page-container">
+                <!-- 1. 消息页面 -->
+                <div class="page active" id="msg-page">
+                    <div class="msg-header">
+                        <!-- 左上角ee头像 - 点击弹出侧边栏 -->
+                        <div class="avatar-btn" id="sidebar-btn">
+                            <img src="https://picsum.photos/200/200?random=1" alt="ee头像">
+                        </div>
+                        <!-- 右上角+号 - 点击弹出添加菜单 -->
+                        <div class="header-btn" id="add-btn">+</div>
+                    </div>
+
+                    <!-- 右上角+号菜单 -->
+                    <div class="add-menu" id="add-menu">
+                        <div class="add-menu-item">添加好友</div>
+                        <div class="add-menu-item">创建群聊</div>
+                        <div class="add-menu-item">导入角色卡</div>
+                    </div>
+
+                    <!-- 消息列表 -->
+                    <div class="msg-list">
+                        <div class="msg-item">
+                            <div class="msg-avatar">
+                                <img src="https://picsum.photos/200/200?random=2" alt="好友头像">
+                            </div>
+                            <div class="msg-info">
+                                <div class="msg-name">好友1号</div>
+                                <div class="msg-preview">你好呀，今天过得怎么样？</div>
+                            </div>
+                            <div class="msg-time">12:30</div>
+                        </div>
+                        <div class="msg-item">
+                            <div class="msg-avatar">
+                                <img src="https://picsum.photos/200/200?random=3" alt="群聊头像">
+                            </div>
+                            <div class="msg-info">
+                                <div class="msg-name">快乐摸鱼群</div>
+                                <div class="msg-preview">大家周末要不要一起出去玩？</div>
+                            </div>
+                            <div class="msg-time">昨天</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 好友页面 -->
+                <div class="page" id="friend-page">
+                    <div class="friend-header">
+                        <div class="friend-user-info">
+                            <div class="friend-avatar">
+                                <img src="https://picsum.photos/200/200?random=1" alt="ee头像">
+                            </div>
+                            <div>
+                                <div class="friend-user-name">ee</div>
+                                <div class="friend-user-desc">欢迎来到我的小世界</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="friend-section">
+                        <div class="section-header">
+                            <div class="section-title">我的好友 (2/2)</div>
+                            <div class="btn btn-default">管理</div>
+                        </div>
+                        <div class="group-item">
+                            <span>默认分组</span>
+                            <span>2人</span>
+                        </div>
+                        <button class="add-group-btn">+ 新增分组</button>
+                    </div>
+
+                    <div class="friend-section">
+                        <div class="section-header">
+                            <div class="section-title">群聊管理 (0/0)</div>
+                            <div class="btn btn-default">管理</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px 0; color: var(--text-secondary); font-size: 14px;">
+                            暂无群聊
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 动态页面 -->
+                <div class="page" id="feed-page">
+                    <div class="feed-header">
+                        <div class="feed-header-title">ee</div>
+                        <div class="feed-header-right">
+                            <div class="feed-header-btn">通知</div>
+                            <div class="feed-header-btn">设置</div>
+                        </div>
+                    </div>
+
+                    <div class="feed-user-card">
+                        <div class="feed-avatar">
+                            <img src="https://picsum.photos/200/200?random=1" alt="ee头像">
+                        </div>
+                        <div class="feed-user-name">ee</div>
+                        <div class="feed-visitor">访客总量 1314</div>
+                    </div>
+
+                    <div class="feed-nav">
+                        <div class="feed-nav-item">
+                            <div class="feed-nav-icon">📝</div>
+                            <span>说说</span>
+                        </div>
+                        <div class="feed-nav-item">
+                            <div class="feed-nav-icon">📓</div>
+                            <span>日志</span>
+                        </div>
+                        <div class="feed-nav-item">
+                            <div class="feed-nav-icon">📷</div>
+                            <span>相册</span>
+                        </div>
+                        <div class="feed-nav-item">
+                            <div class="feed-nav-icon">💬</div>
+                            <span>留言</span>
+                        </div>
+                        <div class="feed-nav-item">
+                            <div class="feed-nav-icon">➕</div>
+                            <span>更多</span>
+                        </div>
+                    </div>
+
+                    <div class="feed-input-box">
+                        <textarea class="feed-input" placeholder="分享新鲜事..." rows="3"></textarea>
+                        <button class="btn btn-primary feed-send-btn">发布</button>
+                    </div>
+
+                    <div class="feed-item">
+                        <div class="feed-item-header">
+                            <div class="feed-item-avatar">
+                                <img src="https://picsum.photos/200/200?random=2" alt="好友头像">
+                            </div>
+                            <div class="feed-item-info">
+                                <div class="feed-item-name">好友1号</div>
+                                <div class="feed-item-time">今天 10:20</div>
+                            </div>
+                        </div>
+                        <div class="feed-item-content">
+                            今天天气真好，出去逛了一圈，心情都变好了！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 频道页面 -->
+                <div class="page" id="channel-page">
+                    <div class="channel-empty">
+                        <div class="channel-empty-icon">📺</div>
+                        <div>暂无频道内容</div>
+                        <button class="btn btn-primary">发现频道</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部Tab导航 -->
+            <div class="tab-bar">
+                <div class="tab-item active" data-page="msg-page">
+                    <div class="tab-icon">💬</div>
+                    <div class="tab-text">消息</div>
+                </div>
+                <div class="tab-item" data-page="friend-page">
+                    <div class="tab-icon">👥</div>
+                    <div class="tab-text">好友</div>
+                </div>
+                <div class="tab-item" data-page="feed-page">
+                    <div class="tab-icon">📷</div>
+                    <div class="tab-text">动态</div>
+                </div>
+                <div class="tab-item" data-page="channel-page">
+                    <div class="tab-icon">📺</div>
+                    <div class="tab-text">频道</div>
+                </div>
+            </div>
+
+            <!-- 底部手势条 -->
+            <div class="home-indicator"></div>
+
+            <!-- 全局蒙版 -->
+            <div class="mask" id="global-mask"></div>
+
+            <!-- 侧边栏蒙版 -->
+            <div class="sidebar-mask" id="sidebar-mask"></div>
+
+            <!-- 侧边栏 -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-user">
+                        <div class="sidebar-avatar">
+                            <img src="https://picsum.photos/200/200?random=1" alt="ee头像">
+                        </div>
+                        <div>
+                            <div class="sidebar-user-name">ee</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-menu">
+                    <div class="sidebar-menu-group">
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">👤</div>
+                            <span>我的人设</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">📖</div>
+                            <span>世界书</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">😀</div>
+                            <span>表情包</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">📝</div>
+                            <span>文字</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">🎨</div>
+                            <span>主题美化</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">💡</div>
+                            <span>提示词</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">⚙️</div>
+                            <span>预设</span>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-menu-group">
+                        <div class="sidebar-menu-title">娱乐项目</div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">🛒</div>
+                            <span>购物</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">📚</div>
+                            <span>图书馆</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">💰</div>
+                            <span>钱包</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">🎮</div>
+                            <span>游戏中心</span>
+                        </div>
+                        <div class="sidebar-menu-item">
+                            <div class="sidebar-menu-icon">🀄</div>
+                            <span>联机棋牌室</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-footer">
+                    <div class="sidebar-footer-btn btn-default" id="setting-btn">设置</div>
+                    <div class="sidebar-footer-btn btn-primary" id="config-btn">配置</div>
+                </div>
+            </div>
+
+            <!-- 设置页面 - 已重构豆包API配置 -->
+            <div class="setting-page" id="setting-page">
+                <div class="setting-header">
+                    <div class="back-btn" id="setting-back-btn">←</div>
+                    <div class="setting-title">设置</div>
+                </div>
+                <div class="setting-content">
+                    <!-- 豆包API核心配置模块 -->
+                    <div class="setting-section">
+                        <div class="setting-section-title">豆包API配置</div>
+                        <div class="setting-item">
+                            <div>
+                                <div>API密钥</div>
+                                <div class="setting-item-desc">请输入豆包开放平台获取的API Key</div>
+                            </div>
+                            <input type="password" class="setting-input" id="api-key" placeholder="sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div>接口地址</div>
+                                <div class="setting-item-desc">豆包官方对话接口地址，一般无需修改</div>
+                            </div>
+                            <input type="text" class="setting-input" id="api-url" value="https://api.doubao.com/chat/completions">
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div>模型选择</div>
+                                <div class="setting-item-desc">选择要使用的豆包大模型</div>
+                            </div>
+                            <select class="setting-select" id="model-select">
+                                <option value="">请先填写API密钥并拉取模型</option>
+                                <option value="doubao-pro-4k">豆包Pro-4k（默认）</option>
+                                <option value="doubao-pro-32k">豆包Pro-32k</option>
+                                <option value="doubao-pro-128k">豆包Pro-128k</option>
+                                <option value="doubao-lite-4k">豆包Lite-4k</option>
+                            </select>
+                            <div class="setting-btn-group">
+                                <button class="btn btn-default" id="fetch-model-btn">拉取模型列表</button>
+                                <button class="btn btn-success" id="test-api-btn">测试连接</button>
+                            </div>
+                            <div class="test-tip" id="test-tip"></div>
+                        </div>
+                    </div>
+
+                    <!-- 其他系统设置 -->
+                    <div class="setting-section">
+                        <div class="setting-section-title">系统设置</div>
+                        <div class="setting-item">
+                            <div class="setting-item-row">
+                                <div>
+                                    <div>时间感知</div>
+                                    <div class="setting-item-desc">同步现实时间到系统</div>
+                                </div>
+                                <div class="setting-switch active" id="time-switch">
+                                    <div class="setting-switch-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-item-row">
+                                <div>
+                                    <div>MiniMax语音合成(TTS)</div>
+                                    <div class="setting-item-desc">配置语音合成参数</div>
+                                </div>
+                                <div class="setting-switch">
+                                    <div class="setting-switch-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary save-btn" id="save-config-btn">保存全部配置</button>
+                </div>
+            </div>
+
+            <!-- 配置页面 -->
+            <div class="setting-page" id="config-page">
+                <div class="setting-header">
+                    <div class="back-btn" id="config-back-btn">←</div>
+                    <div class="setting-title">配置</div>
+                </div>
+                <div class="setting-content">
+                    <div class="setting-section">
+                        <div class="setting-section-title">通知设置</div>
+                        <div class="setting-item">
+                            <div class="setting-item-row">
+                                <div>
+                                    <div>系统通知权限</div>
+                                    <div class="setting-item-desc">开启后可接收消息推送</div>
+                                </div>
+                                <div class="setting-switch">
+                                    <div class="setting-switch-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div>请求授权</div>
+                                <div class="setting-item-desc">管理第三方应用授权</div>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div>
+                                <div>Android设备说明</div>
+                                <div class="setting-item-desc">查看安卓设备适配指南</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-section">
+                        <div class="setting-item-row">
+                            <div>
+                                <div>后台保活服务</div>
+                                <div class="setting-item-desc">保持应用后台运行不被关闭</div>
+                            </div>
+                            <div class="setting-switch">
+                                <div class="setting-switch-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-section">
+                        <div class="setting-section-title">数据管理</div>
+                        <div class="setting-item">
+                            <div>导出数据</div>
+                        </div>
+                        <div class="setting-item">
+                            <div>导入数据</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 全局配置存储 ==========
+        // 页面加载时读取本地存储的配置
+        let globalConfig = JSON.parse(localStorage.getItem('ee-phone-config')) || {
+            apiKey: '',
+            apiUrl: 'https://api.doubao.com/chat/completions',
+            model: 'doubao-pro-4k',
+            timeSense: true,
+            ttsEnable: false
+        };
+
+        // 初始化填充配置到页面
+        function initConfig() {
+            document.getElementById('api-key').value = globalConfig.apiKey;
+            document.getElementById('api-url').value = globalConfig.apiUrl;
+            document.getElementById('model-select').value = globalConfig.model;
+            document.getElementById('time-switch').classList.toggle('active', globalConfig.timeSense);
+        }
+
+        // 保存配置到本地存储
+        function saveConfig() {
+            globalConfig = {
+                apiKey: document.getElementById('api-key').value.trim(),
+                apiUrl: document.getElementById('api-url').value.trim(),
+                model: document.getElementById('model-select').value,
+                timeSense: document.getElementById('time-switch').classList.contains('active'),
+                ttsEnable: false
+            };
+            localStorage.setItem('ee-phone-config', JSON.stringify(globalConfig));
+            showTip('配置保存成功！', 'success');
+        }
+
+        // ========== 实时时间感知功能 ==========
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('current-time').textContent = `${hours}:${minutes}`;
+        }
+        // 页面加载立即更新
+        updateTime();
+        // 每分钟更新一次
+        setInterval(updateTime, 60000);
+
+        // ========== 豆包API功能 ==========
+        // 拉取模型列表
+        const fetchModelBtn = document.getElementById('fetch-model-btn');
+        fetchModelBtn.addEventListener('click', async () => {
+            const apiKey = document.getElementById('api-key').value.trim();
+            if (!apiKey) {
+                showTip('请先填写API密钥', 'error');
+                return;
+            }
+            fetchModelBtn.disabled = true;
+            fetchModelBtn.textContent = '拉取中...';
+            showTip('正在拉取模型列表...', 'success');
+
+            try {
+                // 豆包模型列表接口（可根据官方文档调整）
+                const response = await fetch('https://api.doubao.com/api/v1/models', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const modelSelect = document.getElementById('model-select');
+                    // 清空原有选项
+                    modelSelect.innerHTML = '';
+                    // 填充拉取到的模型
+                    if (data.data && data.data.length > 0) {
+                        data.data.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model.id;
+                            option.textContent = model.name || model.id;
+                            modelSelect.appendChild(option);
+                        });
